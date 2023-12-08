@@ -104,9 +104,22 @@ function tryParseJson(str) {
     return true;
 }
 
+function getTPNonce() {
+    const formElement = document.getElementById('trustpilot_iframe_form'); 
+    let nonce = '';
+    if (formElement && formElement.childNodes.length > 0) {
+        nonce = formElement.childNodes[0].value;
+    } else {
+        nonce = document.getElementById('_wpnonce').value;
+    }
+
+    return nonce
+}
+
 function submitPastOrdersCommand(data) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', ajaxurl, true);
+    xhr.setRequestHeader('X-CSRF-TOKEN', getTPNonce());
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
@@ -123,6 +136,7 @@ function submitPastOrdersCommand(data) {
 function submitCheckProductSkusCommand(data) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', ajaxurl);
+    xhr.setRequestHeader('X-CSRF-TOKEN', getTPNonce());
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
@@ -144,6 +158,7 @@ function sendSignupData() {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', ajaxurl);
+    xhr.setRequestHeader('X-CSRF-TOKEN', getTPNonce());
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
@@ -175,6 +190,7 @@ function reloadSettings() {
     };
     const xhr = new XMLHttpRequest();
     xhr.open('POST', ajaxurl);
+    xhr.setRequestHeader('X-CSRF-TOKEN', getTPNonce());
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
@@ -201,6 +217,7 @@ function submitSettings(parsedData) {
     }
     const xhr = new XMLHttpRequest();
     xhr.open('POST', ajaxurl);
+    xhr.setRequestHeader('X-CSRF-TOKEN', getTPNonce());
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     // TODO: possibility here to send response to integration app for notification about error/success
     // xhr.onreadystatechange = function () {
@@ -221,6 +238,7 @@ function requestCategoryInfo() {
     };
     const xhr = new XMLHttpRequest();
     xhr.open('POST', ajaxurl);
+    xhr.setRequestHeader('X-CSRF-TOKEN', getTPNonce());
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {

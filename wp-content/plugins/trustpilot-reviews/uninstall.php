@@ -5,16 +5,16 @@ if ( ! current_user_can( 'activate_plugins' ) ) {
 }
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-    exit;
+	exit;
 }
 
 delete_option( 'trustpilot_settings' );
 delete_option( 'trustpilot_past_orders' );
 delete_option( 'trustpilot_failed_orders' );
-delete_option( TRUSTPILOT_PLUGIN_STATUS );
+delete_option( 'trustpilot_plugin_status' );
 delete_option( 'show_past_orders_initial' );
 delete_option( 'sync_in_progress' );
 delete_option( 'trustpilot_page_urls' );

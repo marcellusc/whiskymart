@@ -27,7 +27,7 @@ function trustpilot_get_field( $field ) {
 }
 
 function trustpilot_set_field( $field, $new_field ) {
-	if(current_user_can('manage_options')) {
+	if (current_user_can('manage_options')) {
 		$json = json_encode( $new_field );
 		update_option( $field, $json );
 	}

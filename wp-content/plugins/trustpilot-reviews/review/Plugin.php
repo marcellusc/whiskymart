@@ -179,7 +179,7 @@ class Plugin {
 		);
 		wp_enqueue_script( 'tp-js' );
 		if (isset($trustbox->trustboxes) && count($trustbox->trustboxes) > 0) {
-            wp_enqueue_script( 'widget-bootstrap', TRUSTPILOT_WIDGET_SCRIPT_URL . '#trustpilot_async', [], '1.0' );
-        }
+			wp_enqueue_script( 'widget-bootstrap', TRUSTPILOT_WIDGET_SCRIPT_URL . '#trustpilot_async', [], '1.0' );
+		}
 	}
 }

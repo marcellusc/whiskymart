@@ -10,8 +10,9 @@
 
   $(function () {
     var media_frame;
+    var has_iti = typeof intlTelInput === 'function';
 
-    if (typeof (intlTelInput) === 'function' && $('#joinchat_phone').length) {
+    if (has_iti && $('#joinchat_phone').length) {
       var country_request = JSON.parse(localStorage.joinchat_country_code || '{}');
       var country_code = (country_request.code && country_request.date == new Date().toDateString()) ? country_request.code : false;
       var $phone = $('#joinchat_phone');
@@ -20,8 +21,9 @@
       var placeholder = $phone.val() === '' ? $phone.attr('placeholder') : null;
       $phone.removeAttr('placeholder');
 
-      var iti = intlTelInput($phone.get(0), {
+      var iti = intlTelInput($phone[0], {
         hiddenInput: $phone.data('name') || 'joinchat[telephone]',
+        separateDialCode: true,
         initialCountry: 'auto',
         preferredCountries: [country_code || ''],
         geoIpLookup: function (callback) {
@@ -56,6 +58,8 @@
         $this.css('color', $this.val().trim() && !iti.isValidNumber() ? '#ca4a1f' : '');
         // Ensures number it's updated on AJAX save (Gutemberg)
         iti.hiddenInput.value = iti.getNumber();
+        // Enable/disable phone test
+        $('#joinchat_phone_test').attr('disabled', !iti.isValidNumber());
       }).on('blur', function () {
         var iti = intlTelInputGlobals.getInstance(this);
         iti.setNumber(iti.getNumber());
@@ -79,6 +83,26 @@
         $('.joinchat-tab').removeClass('joinchat-tab-active');
         $(href).addClass('joinchat-tab-active').find('textarea').each(textarea_autoheight);
       });
+
+      // Test phone number
+      if ($('#joinchat_phone').length) {
+        // Enable/disable phone test
+        if (!has_iti) {
+          $('#joinchat_phone').on('input change', function () {
+            $('#joinchat_phone_test').attr('disabled', this.value.length < 7);
+          });
+        }
+
+        // View JoinChatUtil::clean_whatsapp() for regex clean info
+        $('#joinchat_phone_test').on('click', function () {
+          var phone = has_iti ? intlTelInputGlobals.getInstance($('#joinchat_phone')[0]).getNumber() : $('#joinchat_phone').val();
+          phone = phone.replace(/^0+|\D/, '')
+            .replace(/^54(0|1|2|3|4|5|6|7|8)/, '549$1')
+            .replace(/^(54\d{5})15(\d{6})/, '$1$2')
+            .replace(/^52(0|2|3|4|5|6|7|8|9)/, '521$1');
+          window.open('https://wa.me/' + encodeURIComponent(phone), 'joinchat', 'noopener');
+        });
+      }
 
       // Toggle WhatsApp web option
       $('#joinchat_mobile_only').on('change', function () {
@@ -207,15 +231,6 @@
       $('#joinchat_woo_btn_position').on('change', function () {
         $('#joinchat_woo_btn_text').closest('tr').toggleClass('joinchat-hidden', $(this).val() == 'none');
       }).trigger('change');
-
-      // Google Ads format validate
-      $('#joinchat_gads').on('focus', function () {
-        if ('' == $(this).val()) $(this).val('AW-_________/____________________');
-      }).on('input focus', function () {
-        $(this).css('color', !/^AW-\d{9}\/\w{19,22}$/.test($(this).val().trim()) ? '#ca4a1f' : '');
-      }).on('blur', function () {
-        if ('AW-_________/____________________' == $(this).val()) $(this).val('');
-      });
     }
 
     if ($('.joinchat-metabox').length) {

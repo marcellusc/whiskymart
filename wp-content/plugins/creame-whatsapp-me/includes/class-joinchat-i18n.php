@@ -13,15 +13,18 @@
  */
 class JoinChat_i18n {
 
+	const DOMAIN_GROUP = 'Join.chat'; // TODO: in future change to "Joinchat".
+
 	/**
 	 * Initialize the class.
 	 *
 	 * @since    4.2.0
+	 * @param  JoinChatLoader $loader loader instance.
+	 * @return void
 	 */
 	public function __construct( $loader ) {
 
-		// No delegate to $loader, use WordPress add_action
-		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
+		$loader->add_action( 'init', $this, 'load_plugin_textdomain', 11 );
 
 		if ( defined( 'WPML_PLUGIN_PATH' ) || defined( 'POLYLANG_VERSION' ) ) {
 
@@ -50,7 +53,7 @@ class JoinChat_i18n {
 	 *
 	 * @since    4.2   (before this was in JoinChatUtil)
 	 * @access   private
-	 * @param    null|array $settings
+	 * @param    null|array $settings list of settings.
 	 * @return   array setting keys and string names
 	 */
 	private function settings_i18n( $settings = null ) {
@@ -64,7 +67,7 @@ class JoinChat_i18n {
 			'optin_text'    => 'Opt-in Text',
 		);
 
-		if ( isset( $settings['header'] ) && ! in_array( $settings['header'], array( '', '__jc__', '__wa__' ) ) ) {
+		if ( isset( $settings['header'] ) && ! in_array( $settings['header'], array( '', '__jc__', '__wa__' ), true ) ) {
 			$localized['header'] = 'Header';
 		}
 
@@ -79,8 +82,8 @@ class JoinChat_i18n {
 	 * view: https://wpml.org/wpml-hook/wpml_register_single_string/
 	 *
 	 * @since  4.2
-	 * @param  array $settings
-	 * @param  array $old_settings
+	 * @param  array $settings new values of settings.
+	 * @param  array $old_settings old values of settings.
 	 * @return void
 	 */
 	public function settings_save( $settings, $old_settings ) {
@@ -91,41 +94,36 @@ class JoinChat_i18n {
 
 		foreach ( $settings_i18n as $key => $label ) {
 			$value = isset( $settings[ $key ] ) ? $settings[ $key ] : '';
-			do_action( 'wpml_register_single_string', 'Join.chat', $label, $value, false, $default_language );
+			do_action( 'wpml_register_single_string', self::DOMAIN_GROUP, $label, $value, false, $default_language );
 
 			if ( isset( $old_settings[ $key ] ) && $old_settings[ $key ] !== $value ) {
 				$translate_notice = true;
 			}
 		}
 
-		// Show notice with link to string translations
+		// Show notice with link to string translations.
 		if ( $translate_notice ) {
 
 			if ( defined( 'WPML_PLUGIN_PATH' ) ) {
-				$link = add_query_arg(
-					array(
-						'page'    => 'wpml-string-translation/menu/string-translation.php',
-						'context' => 'Join.chat',
-					),
-					admin_url( 'admin.php' )
+				$args = array(
+					'page'    => 'wpml-string-translation/menu/string-translation.php',
+					'context' => self::DOMAIN_GROUP,
 				);
 			} else {
-				$link = add_query_arg(
-					array(
-						'page'  => 'mlang_strings',
-						'group' => 'Join.chat',
-						'lang'  => 'all',
-					),
-					admin_url( 'admin.php' )
+				$args = array(
+					'page'  => 'mlang_strings',
+					'group' => self::DOMAIN_GROUP,
+					'lang'  => 'all',
 				);
 			}
 
-			// Note: message is wrapped with <strong>...</strong> tags
+			// Note: message is wrapped with <strong>...</strong> tags.
 			$message = sprintf(
 				'%s</strong>&nbsp;&nbsp;%s&nbsp;&nbsp;<strong><a href="%s">%s</a>',
+				/* translators: %s: site language. */
 				sprintf( __( 'Default site language (%s)', 'creame-whatsapp-me' ), strtoupper( $default_language ) ),
 				__( 'There are changes in fields that can be translated.', 'creame-whatsapp-me' ),
-				esc_url( $link ),
+				esc_url( add_query_arg( $args, admin_url( 'admin.php' ) ) ),
 				__( 'Check translations', 'creame-whatsapp-me' )
 			);
 
@@ -139,7 +137,7 @@ class JoinChat_i18n {
 	 * Get settings translations for current language
 	 *
 	 * @since  4.2
-	 * @param  array $settings
+	 * @param  array $settings list of settings.
 	 * @return array
 	 */
 	public function settings_load( $settings ) {
@@ -147,8 +145,8 @@ class JoinChat_i18n {
 		$settings_i18n = $this->settings_i18n( $settings );
 
 		foreach ( $settings_i18n as $key => $label ) {
-			if ( isset( $settings[ $key ] ) ) {
-				$settings[ $key ] = apply_filters( 'wpml_translate_single_string', $settings[ $key ], 'Join.chat', $label );
+			if ( isset( $settings[ $key ] ) && '' !== $settings[ $key ] ) {
+				$settings[ $key ] = apply_filters( 'wpml_translate_single_string', $settings[ $key ], self::DOMAIN_GROUP, $label );
 			}
 		}
 

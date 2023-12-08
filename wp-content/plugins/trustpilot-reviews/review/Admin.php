@@ -67,21 +67,21 @@ class Admin {
 	}
 
 	public function trustpilot_save_changes() {
-		if(current_user_can('manage_options')) {
+		if (current_user_can('manage_options')) {
 			if ( isset( $_POST['settings'] ) ) {
-				wp_verify_nonce( 'settings' );
+				$this->verify_iframe_nonce();
 				$settings = sanitize_text_field( $_POST['settings'] );
 				update_option( 'trustpilot_settings', $settings );
 				echo esc_html( $settings );
 			}
-			if ( isset( $_POST['pageUrls'] ) ) {
-				wp_verify_nonce( 'pageUrls' );
+			if ( isset( $_POST['pageUrls'] )) {
+				$this->verify_iframe_nonce();
 				$pageUrls = sanitize_text_field( $_POST['pageUrls'] );
 				update_option( 'trustpilot_page_urls', $pageUrls );
 				echo esc_html( $pageUrls );
 			}
 			if ( isset( $_POST['customTrustBoxes'] ) ) {
-				wp_verify_nonce( 'customTrustBoxes' );
+				$this->verify_iframe_nonce();
 				$customTrustBoxes = sanitize_text_field( $_POST['customTrustBoxes'] );
 				update_option( 'trustpilot_custom_TrustBoxes', $customTrustBoxes );
 				echo esc_html( $customTrustBoxes );
@@ -101,27 +101,27 @@ class Admin {
 	}
 
 	public function trustpilot_handle_past_orders_callback() {
-		if(current_user_can('manage_options')) {
+		if (current_user_can('manage_options')) {
 			if ( isset( $_POST['sync'] ) ) {
-				wp_verify_nonce( 'sync' );
+				$this->verify_iframe_nonce();
 				$period = absint( $_POST['sync'] );
 				$this->trustpilot_sync_past_orders( $period );
 				$response_json = $this->trustpilot_get_past_orders_info();
-				echo esc_html( $response_json );
+				echo wp_kses_data($response_json);
 				die();
-			} elseif ( ( isset( $_POST['resync'] ) ) ) {
-				wp_verify_nonce( 'resync' );
+			} elseif ( isset( $_POST['resync'] ) ) {
+				$this->verify_iframe_nonce();
 				$this->trustpilot_resync_failed_orders();
 				$response_json = $this->trustpilot_get_past_orders_info();
-				echo esc_html( $response_json );
+				echo wp_kses_data($response_json);
 				die();
-			} elseif ( ( isset( $_POST['issynced'] ) ) ) {
-				wp_verify_nonce( 'issynced' );
+			} elseif ( isset( $_POST['issynced'] ) ) {
+				$this->verify_iframe_nonce();
 				$response_json = $this->trustpilot_get_past_orders_info();
-				echo esc_html( $response_json );
+				echo wp_kses_data($response_json);
 				die();
-			} elseif ( ( isset( $_POST['showPastOrdersInitial'] ) ) ) {
-				wp_verify_nonce( 'showPastOrdersInitial' );
+			} elseif ( isset( $_POST['showPastOrdersInitial'] ) ) {
+				$this->verify_iframe_nonce();
 				$value = filter_var( $_POST['showPastOrdersInitial'], FILTER_VALIDATE_BOOLEAN );
 				update_option( 'show_past_orders_initial', var_export( $value, true ) );
 				die();
@@ -133,8 +133,8 @@ class Admin {
 
 	public function trustpilot_check_product_skus() {
 		$products = Products::get_instance();
-		wp_verify_nonce( 'skuSelector' );
 		if ( isset( $_POST['skuSelector'] ) ) {
+			$this->verify_iframe_nonce();
 			$results  = $products->trustpilot_check_skus( sanitize_text_field( $_POST['skuSelector'] ) );
 			echo json_encode( $results );
 			die();
@@ -277,7 +277,7 @@ class Admin {
 	}
 
 	private function load_iframe() {
-		$iframe = "";
+		$iframe = '';
 
 		try {
 			$pageUrls          = new \stdClass();
@@ -413,16 +413,16 @@ class Admin {
 	}
 
 	private function get_protocol() {
-    if ( isset( $_SERVER['HTTPS']) ) {
-      if ( 'on' == sanitize_text_field( $_SERVER['HTTPS'] ) || '1' == sanitize_text_field( $_SERVER['HTTPS'] ) ) {
-        return 'https:';
-      }
-    }
+		if ( isset( $_SERVER['HTTPS']) ) {
+			if ( 'on' == sanitize_text_field( $_SERVER['HTTPS'] ) || '1' == sanitize_text_field( $_SERVER['HTTPS'] ) ) {
+				return 'https:';
+			}
+		}
 
-    if ( isset( $_SERVER['SERVER_PORT']) && '443' == $_SERVER['SERVER_PORT'] ) {
-      return 'https:';
-    }
-    return 'http:';
+		if ( isset( $_SERVER['SERVER_PORT']) && '443' == $_SERVER['SERVER_PORT'] ) {
+		  return 'https:';
+		}
+		return 'http:';
 	}
 
 	private function get_integration_app_url() {
@@ -449,6 +449,16 @@ class Admin {
 			);
 		}
 		return $protocol . TRUSTPILOT_INTEGRATION_APP_URL;
+	}
+
+	private function verify_iframe_nonce() {
+		$nonce = isset( $_SERVER['HTTP_X_CSRF_TOKEN'] )
+			? $_SERVER['HTTP_X_CSRF_TOKEN']
+		   : '';
+
+		if ( !wp_verify_nonce( $nonce, 'trustpilot_iframe_form' ) ) {
+			die();
+		}
 	}
 
 	private function wc_display_trustpilot_settings() {
@@ -570,7 +580,7 @@ class Admin {
 
 		add_filter(
 			'safe_style_css',
-			function($array) {
+			function( $array) {
 				$array[] = 'display';
 				return $array;
 			},
@@ -579,7 +589,8 @@ class Admin {
 
 		$settings_html =
 			"<div class='wrap'>
-			" . $this-> load_iframe() . "
+				<div id ='trustpilot_iframe_form'>" . wp_nonce_field( 'trustpilot_iframe_form' ) . ' </div>
+			' . $this-> load_iframe() . "
                 <form method='post' id='trustpilot_settings_form' style='display: none'>
                     <table class='form-table'>" . wp_nonce_field( 'trustpilot_settings_form' ) . "
                         <fieldset>
@@ -615,15 +626,15 @@ class Admin {
                 </form>
             </div>";
 			$validatedHTML = wp_kses($settings_html, $allowed_tags);
-			if ($settings_html != $validatedHTML) {
-				$obj = new \stdClass();
-				$obj->valid = $settings_html;
-				$obj->cleaned = $validatedHTML;
-				$jsonObj = json_encode($obj);
+		if ($settings_html != $validatedHTML) {
+			$obj = new \stdClass();
+			$obj->valid = $settings_html;
+			$obj->cleaned = $validatedHTML;
+			$jsonObj = json_encode($obj);
 
-				$trustpilot_api = new TrustpilotHttpClient( TRUSTPILOT_API_URL );
-				$trustpilot_api->postLog( $obj );
-			}
+			$trustpilot_api = new TrustpilotHttpClient( TRUSTPILOT_API_URL );
+			$trustpilot_api->postLog( $obj );
+		}
 			echo $settings_html;
 	}
 

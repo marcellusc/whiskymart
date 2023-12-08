@@ -115,7 +115,7 @@ class Widget_Image_Box extends Widget_Base {
 		$this->add_control(
 			'title_text',
 			[
-				'label' => esc_html__( 'Title & Description', 'elementor' ),
+				'label' => esc_html__( 'Title', 'elementor' ),
 				'type' => Controls_Manager::TEXT,
 				'dynamic' => [
 					'active' => true,
@@ -129,7 +129,7 @@ class Widget_Image_Box extends Widget_Base {
 		$this->add_control(
 			'description_text',
 			[
-				'label' => esc_html__( 'Content', 'elementor' ),
+				'label' => esc_html__( 'Description', 'elementor' ),
 				'type' => Controls_Manager::TEXTAREA,
 				'dynamic' => [
 					'active' => true,
@@ -138,7 +138,6 @@ class Widget_Image_Box extends Widget_Base {
 				'placeholder' => esc_html__( 'Enter your description', 'elementor' ),
 				'separator' => 'none',
 				'rows' => 10,
-				'show_label' => false,
 			]
 		);
 
@@ -224,6 +223,7 @@ class Widget_Image_Box extends Widget_Base {
 			[
 				'label' => esc_html__( 'Spacing', 'elementor' ),
 				'type' => Controls_Manager::SLIDER,
+				'size_units' => [ 'px', '%', 'em', 'rem', 'vw', 'custom' ],
 				'default' => [
 					'size' => 15,
 				],
@@ -284,7 +284,7 @@ class Widget_Image_Box extends Widget_Base {
 			[
 				'label' => esc_html__( 'Border Radius', 'elementor' ),
 				'type' => Controls_Manager::SLIDER,
-				'size_units' => [ 'px', '%' ],
+				'size_units' => [ 'px', '%', 'em', 'rem', 'custom' ],
 				'separator' => 'after',
 				'selectors' => [
 					'{{WRAPPER}} .elementor-image-box-img img' => 'border-radius: {{SIZE}}{{UNIT}};',
@@ -435,13 +435,23 @@ class Widget_Image_Box extends Widget_Base {
 			'content_vertical_alignment',
 			[
 				'label' => esc_html__( 'Vertical Alignment', 'elementor' ),
-				'type' => Controls_Manager::SELECT,
+				'type' => Controls_Manager::CHOOSE,
 				'options' => [
-					'top' => esc_html__( 'Top', 'elementor' ),
-					'middle' => esc_html__( 'Middle', 'elementor' ),
-					'bottom' => esc_html__( 'Bottom', 'elementor' ),
+					'top' => [
+						'title' => esc_html__( 'Top', 'elementor' ),
+						'icon' => 'eicon-v-align-top',
+					],
+					'middle' => [
+						'title' => esc_html__( 'Middle', 'elementor' ),
+						'icon' => 'eicon-v-align-middle',
+					],
+					'bottom' => [
+						'title' => esc_html__( 'Bottom', 'elementor' ),
+						'icon' => 'eicon-v-align-bottom',
+					],
 				],
 				'default' => 'top',
+				'toggle' => false,
 				'prefix_class' => 'elementor-vertical-align-',
 			]
 		);
@@ -495,6 +505,14 @@ class Widget_Image_Box extends Widget_Base {
 				'global' => [
 					'default' => Global_Typography::TYPOGRAPHY_PRIMARY,
 				],
+			]
+		);
+
+		$this->add_group_control(
+			Group_Control_Text_Stroke::get_type(),
+			[
+				'name' => 'title_stroke',
+				'selector' => '{{WRAPPER}} .elementor-image-box-title',
 			]
 		);
 
@@ -572,13 +590,6 @@ class Widget_Image_Box extends Widget_Base {
 		}
 
 		if ( ! empty( $settings['image']['url'] ) ) {
-			$this->add_render_attribute( 'image', 'src', $settings['image']['url'] );
-			$this->add_render_attribute( 'image', 'alt', Control_Media::get_image_alt( $settings['image'] ) );
-			$this->add_render_attribute( 'image', 'title', Control_Media::get_image_title( $settings['image'] ) );
-
-			if ( $settings['hover_animation'] ) {
-				$this->add_render_attribute( 'image', 'class', 'elementor-animation-' . $settings['hover_animation'] );
-			}
 
 			$image_html = wp_kses_post( Group_Control_Image_Size::get_attachment_image_html( $settings, 'thumbnail', 'image' ) );
 

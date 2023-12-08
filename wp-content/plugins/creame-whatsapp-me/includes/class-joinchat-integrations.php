@@ -19,6 +19,11 @@ class JoinChatIntegrations {
 	public function load_integrations() {
 
 		/**
+		 * Page Builders
+		 */
+		add_filter( 'joinchat_show', array( $this, 'page_builder_show' ) );
+
+		/**
 		 * WooCommerce Integration
 		 */
 		if ( class_exists( 'WooCommerce' ) && version_compare( WC_VERSION, '3.0', '>=' ) ) {
@@ -57,18 +62,11 @@ class JoinChatIntegrations {
 
 				add_action( 'joinchat_run_pre', array( $plugin_elementor_admin, 'init' ) );
 
-			} else {
-
-				require_once JOINCHAT_DIR . 'public/class-joinchat-elementor-public.php';
-
-				$plugin_elementor_public = new JoinChatElementorPublic();
-
-				add_action( 'joinchat_run_pre', array( $plugin_elementor_public, 'init' ) );
-
 			}
 
 			// Add Elementor Finder integration (since 4.1.12).
-			add_action( 'elementor/finder/categories/init', array( $this, 'elementor_finder_integration' ) );
+			$hook = version_compare( ELEMENTOR_VERSION, '3.5.0', '>=' ) ? 'elementor/finder/register' : 'elementor/finder/categories/init';
+			add_action( $hook, array( $this, 'elementor_finder_integration' ) );
 		}
 
 	}
@@ -76,10 +74,10 @@ class JoinChatIntegrations {
 	/**
 	 * Elementor Finder integration.
 	 *
-	 * Add Join.chat category to Elementor Finder.
+	 * Add Joinchat category to Elementor Finder.
 	 *
 	 * @since    4.1.12
-	 * @param Categories_Manager $categories_manager
+	 * @param Categories_Manager $categories_manager instance.
 	 * @return void
 	 */
 	public function elementor_finder_integration( $categories_manager ) {
@@ -95,11 +93,10 @@ class JoinChatIntegrations {
 	}
 
 	/**
-	 * Add WooCommerce item in Join.chat category for Elementor Finder.
+	 * Add WooCommerce item in Joinchat category for Elementor Finder.
 	 *
 	 * @since    4.1.12
-	 * @param  array  $items current Elementor Finder joina.chat items
-	 * @param  string $settings_url Join.chat settings base url
+	 * @param  array $items current Elementor Finder joina.chat items.
 	 * @return array
 	 */
 	public function elementor_finder_woocommerce_item( $items ) {
@@ -109,10 +106,37 @@ class JoinChatIntegrations {
 			'url'         => add_query_arg( 'tab', 'woocommerce', JoinChatUtil::admin_url() ),
 			'icon'        => 'woocommerce',
 			'keywords'    => explode( ',', 'joinchat,whatsapp,' . _x( 'woocommerce,shop,product', 'Keywords in Elementor Finder', 'creame-whatsapp-me' ) ),
-			'description' => __( 'Join.chat settings page', 'creame-whatsapp-me' ),
+			'description' => __( 'Joinchat settings page', 'creame-whatsapp-me' ),
 		);
 
 		return $items;
+
+	}
+
+	/**
+	 * Hide on Page Builder live edition mode.
+	 *
+	 * @since    4.5.19
+	 * @param  bool $show current show button.
+	 * @return bool
+	 */
+	public function page_builder_show( $show ) {
+
+		// phpcs:disable WordPress.Security.NonceVerification
+		$is_builder = false
+			|| isset( $_GET['fl_builder'] )                                                     // Beaver Builder.
+			|| isset( $_GET['is-editor-iframe'] )                                               // Brizy Page Builder.
+			|| isset( $_GET['elementor-preview'] )                                              // Elementor editor.
+			|| ( isset( $_GET['render_mode'] ) && 'template-preview' === $_GET['render_mode'] ) // Elementor template preview.
+			|| isset( $_GET['ct_builder'] )                                                     // Oxygen Builder.
+			|| isset( $_GET['siteorigin_panels_live_editor'] )                                  // Page Builder by SiteOrigin.
+			|| isset( $_GET['vcv-editable'] )                                                   // Visual Composer.
+			|| ( isset( $_GET['load_for'] ) && 'wppb_editor_iframe' === $_GET['load_for'] );    // WP Page Builder.
+		// phpcs:enable
+
+		$builder_show = apply_filters( 'joinchat_page_builder_show', false );
+
+		return $is_builder ? $show && $builder_show : $show;
 
 	}
 

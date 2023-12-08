@@ -82,6 +82,11 @@ There are a number of ways to get in touch with the Support Team at Trustpilot -
 
 == Changelog ==
 
+= 2.5.914 - 07/12/2022 =
+
+* Fixed uninstall issue. 
+* Security improvements.
+
 = 2.5.901 - 02/15/2022 =
 
 * Dynamic Trustbox script. 

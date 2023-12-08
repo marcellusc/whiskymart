@@ -25,7 +25,6 @@ class JoinChatWooAdmin {
 		$loader->add_filter( 'joinchat_settings_validate', $this, 'settings_validate' );
 		$loader->add_filter( 'joinchat_settings_i18n', $this, 'settings_i18n' );
 		$loader->add_filter( 'joinchat_admin_tabs', $this, 'admin_tab' );
-		$loader->add_filter( 'joinchat_custom_post_types', $this, 'custom_post_types' );
 		$loader->add_filter( 'joinchat_taxonomies_meta_box', $this, 'custom_taxonomies' );
 		$loader->add_filter( 'joinchat_tab_visibility_sections', $this, 'visibility_tab_section' );
 		$loader->add_filter( 'joinchat_tab_woocommerce_sections', $this, 'woo_tab_sections' );
@@ -37,7 +36,7 @@ class JoinChatWooAdmin {
 		$loader->add_filter( 'joinchat_metabox_vars', $this, 'metabox_vars', 10, 2 );
 		$loader->add_filter( 'joinchat_metabox_placeholders', $this, 'metabox_placeholders', 10, 3 );
 
-		if ( defined( 'PWB_PLUGIN_FILE' ) ) { // Perfect Brands for WooCommerce
+		if ( defined( 'PWB_PLUGIN_FILE' ) ) { // Perfect Brands for WooCommerce.
 			$loader->add_filter( 'joinchat_term_metabox_output', $this, 'term_metabox_fix', 10, 4 );
 		}
 
@@ -75,7 +74,7 @@ class JoinChatWooAdmin {
 		$input['message_text_product'] = JoinChatUtil::clean_input( $input['message_text_product'] );
 		$input['message_text_on_sale'] = JoinChatUtil::clean_input( $input['message_text_on_sale'] );
 		$input['message_send_product'] = JoinChatUtil::clean_input( $input['message_send_product'] );
-		$input['btn_position']         = array_key_exists( $input['btn_position'], $this->btn_positions() ) ? $input['btn_position'] : 'none';
+		$input['woo_btn_position']     = array_key_exists( $input['woo_btn_position'], $this->btn_positions() ) ? $input['woo_btn_position'] : 'none';
 		$input['woo_btn_text']         = JoinChatUtil::clean_input( $input['woo_btn_text'] );
 
 		return $input;
@@ -113,23 +112,10 @@ class JoinChatWooAdmin {
 	}
 
 	/**
-	 * Remove WooCommerce product custom post type
-	 *
-	 * @since    3.0.0
-	 * @param    array $custom_post_types list of post types
-	 * @return   array
-	 */
-	public function custom_post_types( $custom_post_types ) {
-
-		return array_diff( $custom_post_types, array( 'product' ) );
-
-	}
-
-	/**
 	 * Add WooCommerce product taxonomies for metabox
 	 *
 	 * @since    4.3.0
-	 * @param    array $taxonomies list of taxonomies
+	 * @param    array $taxonomies list of taxonomies.
 	 * @return   array
 	 */
 	public function custom_taxonomies( $taxonomies ) {
@@ -155,11 +141,16 @@ class JoinChatWooAdmin {
 	private function btn_positions() {
 
 		$positions = array(
-			'woocommerce_before_add_to_cart_form'        => __( 'Before "Add To Cart" form', 'creame-whatsapp-me' ),
-			'woocommerce_before_add_to_cart_button'      => __( 'Before "Add To Cart" button', 'creame-whatsapp-me' ),
-			'woocommerce_after_add_to_cart_button'       => __( 'After "Add To Cart" button', 'creame-whatsapp-me' ),
-			'woocommerce_after_add_to_cart_form'         => __( 'After "Add To Cart" form', 'creame-whatsapp-me' ),
+			'woocommerce_single_product_summary__5'      => __( 'After title', 'creame-whatsapp-me' ),
+			'woocommerce_single_product_summary__10'     => __( 'After price', 'creame-whatsapp-me' ),
+			'woocommerce_single_product_summary__20'     => __( 'After short description', 'creame-whatsapp-me' ),
+			'woocommerce_single_product_summary__40'     => __( 'After meta info', 'creame-whatsapp-me' ),
+			'woocommerce_single_product_summary__50'     => __( 'After share links', 'creame-whatsapp-me' ),
 			'woocommerce_product_additional_information' => __( 'After "Additional information"', 'creame-whatsapp-me' ),
+			'woocommerce_before_add_to_cart_form'        => sprintf( '%s (%s)', __( 'Before "Add To Cart" form', 'creame-whatsapp-me' ), __( 'Only when product has price', 'creame-whatsapp-me' ) ),
+			'woocommerce_before_add_to_cart_button'      => sprintf( '%s (%s)', __( 'Before "Add To Cart" button', 'creame-whatsapp-me' ), __( 'Only when product has price', 'creame-whatsapp-me' ) ),
+			'woocommerce_after_add_to_cart_button'       => sprintf( '%s (%s)', __( 'After "Add To Cart" button', 'creame-whatsapp-me' ), __( 'Only when product has price', 'creame-whatsapp-me' ) ),
+			'woocommerce_after_add_to_cart_form'         => sprintf( '%s (%s)', __( 'After "Add To Cart" form', 'creame-whatsapp-me' ), __( 'Only when product has price', 'creame-whatsapp-me' ) ),
 		);
 
 		return array( 'none' => __( "Don't show", 'creame-whatsapp-me' ) ) + apply_filters( 'joinchat_woo_btn_positions', $positions );
@@ -170,10 +161,17 @@ class JoinChatWooAdmin {
 	 * Woocommerce sections and fields for 'joinchat_tab_visibility'
 	 *
 	 * @since    3.0.0
+	 * @since    4.5.18                Remove 'product' CPT.
 	 * @param    array $sections       current tab sections and fields.
 	 * @return   array
 	 */
 	public function visibility_tab_section( $sections ) {
+
+		// Remove product CPT field.
+		unset( $sections['cpt']['view__cpt_product'] );
+		if ( empty( $sections['cpt'] ) ) {
+			unset( $sections['cpt'] );
+		}
 
 		$sections['woo'] = array(
 			'view__woocommerce'  => __( 'Shop', 'creame-whatsapp-me' ),
@@ -203,7 +201,7 @@ class JoinChatWooAdmin {
 		);
 
 		foreach ( $woo_sections as $key => $label ) {
-			$woo_sections[ $key ] = "<label for=\"joinchat_$key\">$label</label>" . JoinChatAdmin::vars_help( $key );
+			$woo_sections[ $key ] = "<label for=\"joinchat_$key\">$label</label>" . JoinChatAdminPage::vars_help( $key );
 		}
 
 		$sections['chat']   = $woo_sections;
@@ -219,8 +217,8 @@ class JoinChatWooAdmin {
 	 * Woocommerce variables for messages and CTAs
 	 *
 	 * @since    3.0.0
-	 * @param    array  $sections       current tab sections and fields.
-	 * @param   string $field          field name.
+	 * @param    array  $vars   current dynamic variables.
+	 * @param   string $field   field name.
 	 * @return   array
 	 */
 	public function vars_help( $vars, $field ) {
@@ -256,7 +254,7 @@ class JoinChatWooAdmin {
 
 			case 'joinchat_tab_woocommerce__button':
 				$output = '<hr><h2 class="title">' . __( 'Product Button', 'creame-whatsapp-me' ) . '</h2>' .
-					'<p>' . __( 'Add a contact button on the product sheet.', 'creame-whatsapp-me' ) . '</p>';
+					'<p>' . __( 'Add a contact button on the single product page.', 'creame-whatsapp-me' ) . '</p>';
 				break;
 		}
 
@@ -305,7 +303,8 @@ class JoinChatWooAdmin {
 				foreach ( $options as $key => $option ) {
 					$output .= sprintf( '<option%s value="%s">%s</option>', $key === $value ? ' selected' : '', esc_attr( $key ), esc_html( $option ) );
 				}
-				$output .= '</select><p class="description">' . __( 'Select the position of the button on the product page', 'creame-whatsapp-me' ) . '</p>';
+				$output .= '</select><p class="description">' . __( 'Select the position of the button on the product page', 'creame-whatsapp-me' ) .
+					'<br><small>(' . __( 'The position may vary depending on the theme or some plugins, try until you find the best location', 'creame-whatsapp-me' ) . ')</small></p>';
 				break;
 
 			case 'woo_btn_text':
@@ -326,9 +325,9 @@ class JoinChatWooAdmin {
 	 */
 	public function visibility_inheritance( $inheritance ) {
 
-		// 'woocommerce' inherit from 'all' (Global)
+		// 'woocommerce' inherit from 'all' (Global).
 		$inheritance['all'][] = 'woocommerce';
-		// WooCommerce pages inherit from 'woocommerce'
+		// WooCommerce pages inherit from 'woocommerce'.
 		$inheritance['woocommerce'] = array( 'product', 'cart', 'checkout', 'thankyou', 'account_page' );
 
 		return $inheritance;
@@ -348,12 +347,12 @@ class JoinChatWooAdmin {
 			'<p>' .
 				'<span><code>{PRODUCT}</code> ➜ ' . __( 'Product Name', 'creame-whatsapp-me' ) . '</span><br> ' .
 				'<span><code>{SKU}</code> ➜ ABC98798</span><br> ' .
-				'<span><code>{PRICE}</code> ➜ ' . strip_tags( wc_price( 7.95 ) ) . '</span> ' .
+				'<span><code>{PRICE}</code> ➜ ' . wp_strip_all_tags( wc_price( 7.95 ) ) . '</span> ' .
 			'</p>' .
 			'<p> ' . __( 'For the <strong>Call to Action for Products on Sale</strong>, you can also use:', 'creame-whatsapp-me' ) . '</p>' .
 			'<p>' .
-				'<span><code>{REGULAR}</code> ➜ ' . strip_tags( wc_price( 9.95 ) ) . '</span><br> ' .
-				'<span><code>{PRICE}</code> ➜ ' . strip_tags( wc_price( 7.95 ) ) . '</span><br> ' .
+				'<span><code>{REGULAR}</code> ➜ ' . wp_strip_all_tags( wc_price( 9.95 ) ) . '</span><br> ' .
+				'<span><code>{PRICE}</code> ➜ ' . wp_strip_all_tags( wc_price( 7.95 ) ) . '</span><br> ' .
 				'<span><code>{DISCOUNT}</code> ➜ -20%</span>' .
 			'</p>';
 
@@ -371,7 +370,7 @@ class JoinChatWooAdmin {
 	 */
 	public function metabox_vars( $vars, $obj ) {
 
-		if ( $obj instanceof WP_Post && 'product' == $obj->post_type ) {
+		if ( $obj instanceof WP_Post && 'product' === $obj->post_type ) {
 			$product  = wc_get_product( $obj->ID );
 			$woo_vars = array( 'PRODUCT', 'SKU', 'PRICE' );
 
@@ -390,22 +389,24 @@ class JoinChatWooAdmin {
 	 * Add Product metabox placeholders info.
 	 *
 	 * @since    3.2.0
-	 * @param    array           $placeholders current placeholders.
-	 * @param    WP_Post|WP_Term $obj current post|term.
-	 * @param    array           $settings current settings.
+	 * @param    array           $placeholders  current placeholders.
+	 * @param    WP_Post|WP_Term $obj           current post|term.
+	 * @param    array           $settings      current settings.
 	 * @return   array
 	 */
 	public function metabox_placeholders( $placeholders, $obj, $settings ) {
 
-		if ( $obj instanceof WP_Post && 'product' == $obj->post_type ) {
+		if ( $obj instanceof WP_Post && 'product' === $obj->post_type ) {
 			$product = wc_get_product( $obj->ID );
 
-			$placeholders['message_send'] = $settings['message_send_product'] ?: $settings['message_send'];
+			if ( $settings['message_send_product'] ) {
+				$placeholders['message_send'] = $settings['message_send_product'];
+			}
 
 			if ( $product->is_on_sale() && $settings['message_text_on_sale'] ) {
 				$placeholders['message_text'] = $settings['message_text_on_sale'];
-			} else {
-				$placeholders['message_text'] = $settings['message_text_product'] ?: $settings['message_text'];
+			} elseif ( $settings['message_text_product'] ) {
+				$placeholders['message_text'] = $settings['message_text_product'];
 			}
 		}
 
@@ -416,10 +417,10 @@ class JoinChatWooAdmin {
 	 * Fix term meteabox for Brands
 	 *
 	 * @since    4.4.2
-	 * @param    string  $metabox_output
-	 * @param    WP_Term $term Current taxonomy term object
-	 * @param    array   $metadata
-	 * @param    string  $taxonomy Current taxonomy slug
+	 * @param    string  $metabox_output  metabox html.
+	 * @param    WP_Term $term            Current taxonomy term object.
+	 * @param    array   $metadata        Jonchat term_meta.
+	 * @param    string  $taxonomy        Current taxonomy slug.
 	 * @return   string
 	 */
 	public function term_metabox_fix( $metabox_output, $term, $metadata, $taxonomy ) {
